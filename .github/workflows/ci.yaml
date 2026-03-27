@@ -12,7 +12,6 @@ env:
 
 jobs:
 
-  # JOB 1 - BUILD + PUSH
   ci:
     name: Build & Push
     runs-on: ubuntu-latest
@@ -22,8 +21,7 @@ jobs:
 
       - name: Login to Docker Hub
         run: |
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | \
-          docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Build Docker image
         run: docker build -t $DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG .
@@ -31,7 +29,6 @@ jobs:
       - name: Push Docker image
         run: docker push $DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
-  # JOB 2 - SCAN TRIVY (BONUS)
   scan-trivy:
     name: Security scan (Trivy)
     runs-on: ubuntu-latest
@@ -50,7 +47,6 @@ jobs:
           vuln-type: os,library
           ignore-unfixed: true
 
-  # JOB 3 - DEPLOY
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
@@ -66,28 +62,4 @@ jobs:
         run: docker rm ci-app || true
 
       - name: Run new container
-        run: |
-          docker run -d \
-            -p 80:80 \
-            --name ci-app \
-            $DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
-```
-
----
-
-### Résultat final
-
-| Job | Statut | Durée |
-|---|---|---|
-| Build & Push | Succès | 16s |
-| Security scan (Trivy) | Succès | 24s |
-| Deploy | Succès | 7s |
-| **Total** | **Success** | **56s** |
-
----
-
-### Liens à soumettre
-```
-Repo forké  : https://github.com/nkhadyn-18/html5up-forty
-Workflow    : https://github.com/nkhadyn-18/html5up-forty/blob/main/.github/workflows/ci.yaml
-Pipeline OK : https://github.com/nkhadyn-18/html5up-forty/actions/runs/23666233772
+        run: docker run -d -p 80:80 --name ci-app $DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
